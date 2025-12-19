@@ -21,8 +21,9 @@ class User:
             "isVerified": data.get("isVerified", False),
             "verificationCode": data.get("verificationCode"),
             "verificationCodeExpires": data.get("verificationCodeExpires"),
+            "organizationId": ObjectId(data["organizationId"]) if data.get("organizationId") else None,
             "organization": data.get("organization", {}),
-            "role": data.get("role", "user"),
+            "role": data.get("role", "admin"),  # Default to admin for UI registrations
             "provider": data.get("provider", "local"),
             "providerId": data.get("providerId"),
             "mfaEnabled": data.get("mfaEnabled", False),
@@ -386,3 +387,93 @@ class ApiToken:
         """Get token information by value"""
         return ApiToken.find_by_token_value(token_value)
 
+# Add these classes to your existing models.py
+
+class Organization:
+    collection = db.organizations
+    
+    @staticmethod
+    def create_organization(data):
+        """Create a new organization - only after email verification"""
+        org_data = {
+            "name": data["name"],
+            "domain": data.get("domain", ""),
+            "industry": data.get("industry", ""),
+            "size": data.get("size", ""),
+            "createdBy": ObjectId(data["createdBy"]),
+            "verified": data.get("verified", False),
+            "ssoEnabled": data.get("ssoEnabled", False),
+            "createdAt": datetime.utcnow(),
+            "updatedAt": datetime.utcnow()
+        }
+        return Organization.collection.insert_one(org_data)
+    
+    @staticmethod
+    def find_by_domain(domain):
+        return Organization.collection.find_one({"domain": domain})
+    
+    @staticmethod
+    def find_by_id(org_id):
+        return Organization.collection.find_one({"_id": ObjectId(org_id)})
+
+
+class PendingRegistration:
+    """Temporary storage for registration data before verification"""
+    collection = db.pending_registrations
+    
+    @staticmethod
+    def create(data):
+        pending_data = {
+            "firstName": data["firstName"],
+            "lastName": data["lastName"],
+            "email": data["email"].lower(),
+            "phone": data["phone"],
+            "password": data["password"],
+            "organizationData": data.get("organizationData", {}),
+            "verificationCode": data["verificationCode"],
+            "verificationCodeExpires": data["verificationCodeExpires"],
+            "createdAt": datetime.utcnow(),
+            "updatedAt": datetime.utcnow()
+        }
+        return PendingRegistration.collection.insert_one(pending_data)
+    
+    @staticmethod
+    def find_by_email(email):
+        return PendingRegistration.collection.find_one({"email": email.lower()})
+    
+    @staticmethod
+    def find_by_code(code):
+        return PendingRegistration.collection.find_one({"verificationCode": code})
+    
+    @staticmethod
+    def delete_by_email(email):
+        return PendingRegistration.collection.delete_one({"email": email.lower()})
+
+
+class AuditLog:
+    """Centralized audit logging system"""
+    collection = db.audit_logs
+    
+    @staticmethod
+    def create_log(data):
+        log_data = {
+            "userId": ObjectId(data["userId"]) if data.get("userId") else None,
+            "organizationId": ObjectId(data["organizationId"]) if data.get("organizationId") else None,
+            "actionType": data["actionType"],
+            "ipAddress": data.get("ipAddress"),
+            "userAgent": data.get("userAgent"),
+            "metadata": data.get("metadata", {}),
+            "timestamp": datetime.utcnow()
+        }
+        return AuditLog.collection.insert_one(log_data)
+    
+    @staticmethod
+    def log_auth_attempt(user_id, action_type, ip_address, user_agent, metadata=None):
+        """Helper method for auth-related logs"""
+        return AuditLog.create_log({
+            "userId": user_id,
+            "actionType": action_type,
+            "ipAddress": ip_address,
+            "userAgent": user_agent,
+            "metadata": metadata or {}
+        })
