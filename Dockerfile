@@ -1,22 +1,21 @@
 # ============================================
-# DOCKERFILE FOR KEYORBIT KMS
-# Post-Quantum Cryptography Key Management System
-# Supports ML-KEM and ML-DSA (NIST FIPS 203/204)
+# KEYORBIT KMS - RENDER DEPLOYMENT
+# ML-KEM-768 (Kyber768) & ML-DSA-65 (Dilithium3)
 # ============================================
 
 FROM python:3.11-slim
 
-# Environment variables
+# -----------------------------
+# Environment Variables
+# -----------------------------
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive \
-    PIP_NO_CACHE_DIR=1 \
-    PORT=8000
+    PORT=10000
 
-# Set working directory
-WORKDIR /app
-
-# Install system dependencies in a single layer
+# -----------------------------
+# Install System Dependencies
+# -----------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     build-essential \
@@ -26,81 +25,57 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# ============================================
-# BUILD LIBOQS WITH POST-QUANTUM ALGORITHMS
-# ============================================
-
+# -----------------------------
+# Build liboqs (ML-KEM / ML-DSA)
+# -----------------------------
 WORKDIR /tmp
+
 RUN git clone --depth 1 https://github.com/open-quantum-safe/liboqs.git && \
     cd liboqs && \
     mkdir build && cd build && \
     cmake \
         -DCMAKE_BUILD_TYPE=Release \
-        -DOQS_ENABLE_KEM_CLASSIC_MCELIECE=OFF \
-        -DOQS_ENABLE_KEM_FRODOKEM=OFF \
-        -DOQS_ENABLE_KEM_NTRUPRIME=OFF \
-        -DOQS_ENABLE_KEM_BIKE=OFF \
-        -DOQS_ENABLE_KEM_HQC=OFF \
-        -DOQS_ENABLE_SIG_FALCON=OFF \
-        -DOQS_ENABLE_SIG_SPHINCS=OFF \
-        -DOQS_ENABLE_SIG_MAYO=OFF \
-        -DOQS_ENABLE_SIG_CROSS=OFF \
-        -DOQS_ENABLE_SIG_OV=OFF \
-        -DOQS_ENABLE_SIG_SNOVA=OFF \
         -DBUILD_SHARED_LIBS=ON \
         -DCMAKE_INSTALL_PREFIX=/usr/local \
         .. && \
-    make -j4 && \
+    make -j$(nproc) && \
     make install && \
     ldconfig && \
     cd /tmp && rm -rf liboqs
 
-# ============================================
-# SETUP APPLICATION
-# ============================================
-
+# -----------------------------
+# Setup Application
+# -----------------------------
 WORKDIR /app
 
-# Copy requirements file
 COPY requirements.txt .
 
-# Install Python dependencies
 RUN pip install --upgrade pip setuptools wheel && \
-    pip install -r requirements.txt && \
-    pip install liboqs-python
+    pip install -r requirements.txt
 
-# Copy application code
+# Copy app code
 COPY main.py .
-COPY app/ ./app/
 
-# Create necessary directories
-RUN mkdir -p /app/logs /app/migrations
-
-# ============================================
-# CLEANUP & OPTIMIZATION
-# ============================================
-
-RUN apt-get remove -y git build-essential cmake && \
+# -----------------------------
+# Remove build tools (reduce image size)
+# -----------------------------
+RUN apt-get purge -y git build-essential cmake && \
     apt-get autoremove -y && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/cache/*
+    rm -rf /var/lib/apt/lists/* /tmp/*
 
-# Create non-root user for security (optional but recommended)
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+# -----------------------------
+# Non-root user (Security)
+# -----------------------------
+RUN useradd -m appuser
 USER appuser
 
-# ============================================
-# HEALTH CHECK
-# ============================================
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/health || exit 1
-
-# Expose port
+# -----------------------------
+# Expose Render Port
+# -----------------------------
 EXPOSE ${PORT}
 
-# ============================================
-# RUN APPLICATION
-# ============================================
-
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 2 --worker-class sync --timeout 120 --access-logfile - --error-logfile - --log-level info 'main:create_app()'"]
+# -----------------------------
+# Start Application (Render)
+# -----------------------------
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-10000} --workers 1"]
