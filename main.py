@@ -8,6 +8,11 @@ from app.routes.password import password_bp
 from app.routes.tokens import tokens_bp
 from app.routes.me import me_bp
 from app.routes.api_protected import api_protected_bp
+from app.routes.users import users_bp
+from app.routes.keys import keys_bp
+from app.routes.api_keys import api_keys_bp
+from app.routes.audit import audit_bp  # Add this import
+from app.routes.dashboard import dashboard_bp
 
 def create_app():
     app = Flask(__name__)
@@ -30,6 +35,11 @@ def create_app():
     app.register_blueprint(tokens_bp, url_prefix='/')
     app.register_blueprint(me_bp, url_prefix='/')
     app.register_blueprint(api_protected_bp, url_prefix='/')
+    app.register_blueprint(users_bp, url_prefix='')
+    app.register_blueprint(keys_bp, url_prefix='')
+    app.register_blueprint(api_keys_bp, url_prefix='')
+    app.register_blueprint(audit_bp, url_prefix='')  # Add this line
+    app.register_blueprint(dashboard_bp, url_prefix='')
     
     # Add health check endpoint
     @app.route('/health', methods=['GET'])

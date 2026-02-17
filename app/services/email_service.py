@@ -22,7 +22,7 @@ class EmailService:
                     border: 1px solid rgba(255, 255, 255, 0.2);
                     box-shadow: 0 8px 32px rgba(13, 13, 89, 0.3);
                 ">
-                    <img src="https://i.ibb.co/gbnZxzVK/Black-White-Modern-Letter-AG-Logo-1-removebg-preview.png" 
+                    <img src="https://i.ibb.co/vCWbbHFh/keyorbit-logo.png" 
                          alt="KeyOrbit Logo" 
                          style="max-width: 180px; height: auto; filter: brightness(1.2);">
                 </div>
@@ -184,6 +184,87 @@ class EmailService:
         
         return EmailService._send_email(email, subject, html)
     
+    @staticmethod
+    def send_user_invitation_email(email, invitation_token, organization_name, inviter_name, role, message="", is_resend=False):
+            """Send user invitation email"""
+            subject = f"Join {organization_name} on KeyOrbit" if not is_resend else f"Reminder: Join {organization_name} on KeyOrbit"
+            
+            # Create acceptance URL
+            accept_url = f"{Config.FRONTEND_URL}/accept-invitation?token={invitation_token}"
+            
+            # Map role to display name
+            role_display = {
+                'admin': 'Administrator',
+                'administrator': 'Administrator',
+                'manager': 'Manager',
+                'developer': 'Developer',
+                'auditor': 'Auditor',
+                'viewer': 'Viewer',
+                'user': 'User'
+            }.get(role, role.capitalize())
+            
+            content = f"""
+            <h2 style="margin-top: 0; color: #ffffff; font-size: 28px; font-weight: 600; letter-spacing: -0.3px;">
+                You're Invited to Join {organization_name}
+            </h2>
+            
+            <p style="color: rgba(255, 255, 255, 0.9); font-size: 16px; line-height: 1.6; margin: 15px 0;">
+                <strong>{inviter_name}</strong> has invited you to join <strong>{organization_name}</strong> on KeyOrbit.
+                You've been assigned the role of <strong>{role_display}</strong>.
+            </p>
+            
+            {message and f'<p style="color: rgba(255, 255, 255, 0.8); font-size: 15px; line-height: 1.6; margin: 15px 0; font-style: italic;">"{message}"</p>'}
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{accept_url}" style="display: inline-block; padding: 16px 32px; background: rgba(242, 140, 0, 0.2); backdrop-filter: blur(20px); color: white; text-decoration: none; border-radius: 16px; font-weight: 600; font-size: 16px; margin: 25px 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(242, 140, 0, 0.3); box-shadow: 0 8px 32px rgba(242, 140, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2); position: relative; overflow: hidden; letter-spacing: 0.5px;">
+                    Accept Invitation
+                </a>
+            </div>
+            
+            <p style="color: rgba(255, 255, 255, 0.8); font-size: 14px; text-align: center; margin: 15px 0;">
+                This invitation will expire in 7 days. If you didn't expect this invitation, please ignore this email.
+            </p>
+            
+            <div style="background: rgba(59, 130, 246, 0.15); backdrop-filter: blur(10px); border-radius: 16px; padding: 25px; margin: 20px 0; border: 1px solid rgba(59, 130, 246, 0.3); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1); position: relative;">
+                <h4 style="margin: 0 0 15px 0; color: #ffffff; font-size: 18px; font-weight: 600;">About Your Role: {role_display}</h4>
+                <p style="margin: 0; color: rgba(255, 255, 255, 0.9);">
+                    {role_display} role includes the following permissions:<br>
+                    {EmailService._get_role_permissions_description(role)}
+                </p>
+            </div>
+            
+            <div style="background: rgba(16, 185, 129, 0.15); backdrop-filter: blur(10px); border-radius: 16px; padding: 25px; margin: 20px 0; border: 1px solid rgba(16, 185, 129, 0.3); border-left: 4px solid #10B981; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1); position: relative;">
+                <h4 style="margin: 0 0 15px 0; color: #ffffff; font-size: 18px; font-weight: 600;">What is KeyOrbit?</h4>
+                <p style="margin: 0; color: rgba(255, 255, 255, 0.9);">
+                    KeyOrbit is an enterprise key management system that helps organizations securely manage 
+                    cryptographic keys, secrets, and certificates. As a member of {organization_name}, 
+                    you'll have access to secure key storage, encryption services, and audit logging.
+                </p>
+            </div>
+            
+            <p style="color: rgba(255, 255, 255, 0.9); font-size: 12px; margin-top: 25px; background: rgba(255, 255, 255, 0.06); padding: 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                Alternatively, you can copy and paste this link in your browser:<br>
+                <span style="text-align: center; color: rgba(255, 255, 255, 0.9); padding: 8px; border-radius: 4px; word-break: break-all; font-family: monospace;">{accept_url}</span>
+            </p>
+            """
+            
+            html = EmailService._create_email_template(subject, content)
+            
+            return EmailService._send_email(email, subject, html)
+        
+    @staticmethod
+    def _get_role_permissions_description(role):
+            """Get description of permissions for a role"""
+            permissions_map = {
+                'admin': '• Full system administration<br>• Manage all keys and secrets<br>• Manage users and permissions<br>• Access all audit logs<br>• Configure system settings',
+                'administrator': '• Full system administration<br>• Manage all keys and secrets<br>• Manage users and permissions<br>• Access all audit logs<br>• Configure system settings',
+                'manager': '• Manage team members<br>• Create and manage keys<br>• View audit logs<br>• Configure team settings',
+                'developer': '• Create and manage keys<br>• Encrypt/decrypt data<br>• View own activity logs',
+                'auditor': '• View all audit logs<br>• Generate compliance reports<br>• Monitor system activity',
+                'viewer': '• View keys and data (read-only)<br>• View basic reports',
+                'user': '• Basic key operations<br>• View own resources'
+            }
+            return permissions_map.get(role, 'Basic access permissions')
     
     @staticmethod
     def send_admin_notification_email(admin_email, user_email, user_name):
@@ -243,3 +324,4 @@ class EmailService:
         except Exception as e:
             print(f"Email sending failed to {to_email}: {str(e)}")
             return False
+    

@@ -315,3 +315,4 @@ def get_token_realtime_details(current_user, token_id):
     except Exception as e:
         print(f"Error getting token realtime details: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
+    

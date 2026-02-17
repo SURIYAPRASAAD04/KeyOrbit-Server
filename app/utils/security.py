@@ -4,8 +4,60 @@ from datetime import datetime, timedelta
 from pytz import timezone, UTC
 import bcrypt
 from app.config import Config
+import hashlib
+import base64
+
 
 IST = timezone('Asia/Kolkata')
+
+# Add these functions if they don't exist
+
+def generate_key_id():
+    """Generate a unique key ID"""
+    import secrets
+    import time
+    
+    timestamp = int(time.time() * 1000)
+    random_part = secrets.token_hex(8)
+    return f"key_{timestamp}_{random_part}"
+
+def hash_key_material(key_material):
+    """Hash key material for integrity verification"""
+    if isinstance(key_material, bytes):
+        return hashlib.sha256(key_material).hexdigest()
+    return hashlib.sha256(key_material.encode()).hexdigest()
+
+def get_current_ist_time():
+    """Get current time in IST"""
+    return datetime.now(IST)
+
+def format_ist_time(dt):
+    """Format datetime to IST string"""
+    if dt.tzinfo is None:
+        dt = IST.localize(dt)
+    return dt.astimezone(IST).isoformat()
+
+def parse_expiration_date(expires_at):
+    """Parse expiration date string"""
+    from dateutil import parser
+    
+    if isinstance(expires_at, str):
+        dt = parser.parse(expires_at)
+        if dt.tzinfo is None:
+            dt = IST.localize(dt)
+        return dt
+    return expires_at
+
+def is_token_expired(expires_at):
+    """Check if token has expired"""
+    now = get_current_ist_time()
+    if expires_at.tzinfo is None:
+        expires_at = IST.localize(expires_at)
+    return now > expires_at
+
+def generate_verification_code():
+    """Generate a 6-digit verification code"""
+    return ''.join(secrets.choice('0123456789') for _ in range(6))
 
 def get_current_ist_time():
     """Get current time in IST timezone"""

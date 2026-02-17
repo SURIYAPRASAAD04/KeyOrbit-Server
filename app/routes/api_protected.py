@@ -6,7 +6,7 @@ api_protected_bp = Blueprint('api_protected', __name__)
 # Example protected endpoints using API tokens
 
 @api_protected_bp.route('/api/v1/me', methods=['GET'])
-@api_token_required()  # No specific permissions required, just valid token
+@api_token_required()  
 def get_api_user_info():
     """Get user info using API token"""
     from app.models import User
