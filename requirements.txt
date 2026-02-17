@@ -18,7 +18,8 @@ bcrypt==4.0.1
 cryptography==41.0.7
 
 # Post-Quantum Cryptography
-liboqs-python==0.8.0
+liboqs-python==0.14.1
+cryptography==41.0.3
 
 # Environment Management
 python-dotenv==1.0.0
