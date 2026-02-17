@@ -1,81 +1,72 @@
-# ============================================
-# KEYORBIT KMS - RENDER DEPLOYMENT
-# ML-KEM-768 (Kyber768) & ML-DSA-65 (Dilithium3)
-# ============================================
+# ==========================================
+# KEYORBIT KMS - PRODUCTION DOCKERFILE
+# Flask + Gunicorn + liboqs (Kyber + Dilithium)
+# ==========================================
 
 FROM python:3.11-slim
 
-# -----------------------------
-# Environment Variables
-# -----------------------------
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    DEBIAN_FRONTEND=noninteractive \
-    PORT=10000
-
-# -----------------------------
-# Install System Dependencies
-# -----------------------------
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    git \
+# ------------------------------------------
+# System Dependencies
+# ------------------------------------------
+RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
+    git \
     libssl-dev \
-    ca-certificates \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# -----------------------------
-# Build liboqs (ML-KEM / ML-DSA)
-# -----------------------------
-WORKDIR /tmp
+# ------------------------------------------
+# Install liboqs (ONLY Kyber + Dilithium)
+# ------------------------------------------
+WORKDIR /opt
 
-RUN git clone --depth 1 https://github.com/open-quantum-safe/liboqs.git && \
-    cd liboqs && \
-    mkdir build && cd build && \
-    cmake \
+RUN git clone --depth 1 https://github.com/open-quantum-safe/liboqs.git \
+    && cd liboqs \
+    && mkdir build && cd build \
+    && cmake -GNinja \
         -DCMAKE_BUILD_TYPE=Release \
+        -DOQS_ENABLE_KEM_KYBER=ON \
+        -DOQS_ENABLE_SIG_DILITHIUM=ON \
+        \
+        -DOQS_ENABLE_KEM_CLASSIC_MCELIECE=OFF \
+        -DOQS_ENABLE_KEM_FRODOKEM=OFF \
+        -DOQS_ENABLE_KEM_NTRUPRIME=OFF \
+        -DOQS_ENABLE_KEM_BIKE=OFF \
+        -DOQS_ENABLE_KEM_HQC=OFF \
+        \
+        -DOQS_ENABLE_SIG_FALCON=OFF \
+        -DOQS_ENABLE_SIG_SPHINCS=OFF \
+        -DOQS_ENABLE_SIG_MAYO=OFF \
+        -DOQS_ENABLE_SIG_CROSS=OFF \
+        -DOQS_ENABLE_SIG_OV=OFF \
+        -DOQS_ENABLE_SIG_SNOVA=OFF \
+        \
         -DBUILD_SHARED_LIBS=ON \
         -DCMAKE_INSTALL_PREFIX=/usr/local \
-        .. && \
-    make -j$(nproc) && \
-    make install && \
-    ldconfig && \
-    cd /tmp && rm -rf liboqs
+        .. \
+    && cmake --build . --parallel \
+    && cmake --install .
 
-# -----------------------------
-# Setup Application
-# -----------------------------
+ENV LD_LIBRARY_PATH=/usr/local/lib
+
+# ------------------------------------------
+# Application Setup
+# ------------------------------------------
 WORKDIR /app
 
 COPY requirements.txt .
 
-RUN pip install --upgrade pip setuptools wheel && \
-    pip install -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
-# Copy app code
-COPY main.py .
+COPY . .
 
-# -----------------------------
-# Remove build tools (reduce image size)
-# -----------------------------
-RUN apt-get purge -y git build-essential cmake && \
-    apt-get autoremove -y && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/*
+# ------------------------------------------
+# Expose Port
+# ------------------------------------------
+EXPOSE 8000
 
-# -----------------------------
-# Non-root user (Security)
-# -----------------------------
-RUN useradd -m appuser
-USER appuser
-
-# -----------------------------
-# Expose Render Port
-# -----------------------------
-EXPOSE ${PORT}
-
-# -----------------------------
-# Start Application (Render)
-# -----------------------------
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-10000} --workers 1"]
+# ------------------------------------------
+# Start Gunicorn
+# ------------------------------------------
+CMD ["gunicorn", "main:create_app()", "--bind", "0.0.0.0:8000", "--workers", "2"]

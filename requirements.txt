@@ -2,29 +2,29 @@
 # KEYORBIT KMS - PRODUCTION
 # ===============================
 
-# --- Web Framework (FastAPI stack) ---
-fastapi==0.110.0
-uvicorn[standard]==0.27.1
+# --- Flask Core ---
+Flask==2.3.3
+Flask-CORS==4.0.0
+Werkzeug==2.3.7
+
+# --- Production Server ---
 gunicorn==21.2.0
 
-# --- Post-Quantum Cryptography ---
+# --- Post-Quantum Crypto ---
 liboqs-python==0.14.1
-
-# --- Security & Authentication ---
 cryptography==41.0.7
+
+# --- Security ---
 PyJWT==2.8.0
 bcrypt==4.0.1
 
 # --- Database ---
 pymongo==4.5.0
 
-# --- Environment Management ---
+# --- Environment ---
 python-dotenv==1.0.0
 
-# --- HTTP Requests ---
+# --- Utilities ---
 requests==2.31.0
-urllib3==2.1.0
-
-# --- Date & Time ---
-pytz==2023.3
 python-dateutil==2.8.2
+pytz==2023.3
