@@ -1,72 +1,128 @@
-# ==========================================
+# ============================================
 # KEYORBIT KMS - PRODUCTION DOCKERFILE
-# Flask + Gunicorn + liboqs (Kyber + Dilithium)
-# ==========================================
+# Post-Quantum Cryptography Key Management System
+# ML-KEM-768 (Kyber768) & ML-DSA-65 (Dilithium3)
+# ============================================
 
 FROM python:3.11-slim
 
-# ------------------------------------------
-# System Dependencies
-# ------------------------------------------
-RUN apt-get update && apt-get install -y \
+# -----------------------------
+# Environment Variables
+# -----------------------------
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    PORT=8000 \
+    TZ=Asia/Kolkata \
+    FLASK_ENV=production
+
+# -----------------------------
+# Install System Dependencies
+# -----------------------------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
     build-essential \
     cmake \
-    git \
     libssl-dev \
+    ca-certificates \
+    curl \
+    tzdata \
+    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
     && rm -rf /var/lib/apt/lists/*
 
-# ------------------------------------------
-# Install liboqs (ONLY Kyber + Dilithium)
-# ------------------------------------------
-WORKDIR /opt
+# -----------------------------
+# Build liboqs (Open Quantum Safe)
+# Enables ML-KEM, ML-DSA and other PQC algorithms
+# -----------------------------
+WORKDIR /tmp
 
-RUN git clone --depth 1 https://github.com/open-quantum-safe/liboqs.git \
-    && cd liboqs \
-    && mkdir build && cd build \
-    && cmake -GNinja \
+RUN git clone --depth 1 https://github.com/open-quantum-safe/liboqs.git && \
+    cd liboqs && \
+    mkdir build && cd build && \
+    cmake \
         -DCMAKE_BUILD_TYPE=Release \
-        -DOQS_ENABLE_KEM_KYBER=ON \
-        -DOQS_ENABLE_SIG_DILITHIUM=ON \
-        \
+        -DBUILD_SHARED_LIBS=ON \
         -DOQS_ENABLE_KEM_CLASSIC_MCELIECE=OFF \
         -DOQS_ENABLE_KEM_FRODOKEM=OFF \
         -DOQS_ENABLE_KEM_NTRUPRIME=OFF \
         -DOQS_ENABLE_KEM_BIKE=OFF \
         -DOQS_ENABLE_KEM_HQC=OFF \
-        \
         -DOQS_ENABLE_SIG_FALCON=OFF \
         -DOQS_ENABLE_SIG_SPHINCS=OFF \
         -DOQS_ENABLE_SIG_MAYO=OFF \
         -DOQS_ENABLE_SIG_CROSS=OFF \
         -DOQS_ENABLE_SIG_OV=OFF \
         -DOQS_ENABLE_SIG_SNOVA=OFF \
-        \
-        -DBUILD_SHARED_LIBS=ON \
         -DCMAKE_INSTALL_PREFIX=/usr/local \
-        .. \
-    && cmake --build . --parallel \
-    && cmake --install .
+        .. && \
+    make -j$(nproc) && \
+    make install && \
+    ldconfig && \
+    cd /tmp && rm -rf liboqs
 
-ENV LD_LIBRARY_PATH=/usr/local/lib
-
-# ------------------------------------------
-# Application Setup
-# ------------------------------------------
+# -----------------------------
+# Setup Application Directory
+# -----------------------------
 WORKDIR /app
 
+# -----------------------------
+# Copy requirements first for better caching
+# -----------------------------
 COPY requirements.txt .
 
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+# -----------------------------
+# Install Python Dependencies
+# -----------------------------
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir liboqs-python gunicorn
 
+# -----------------------------
+# Copy Complete Application
+# -----------------------------
 COPY . .
 
-# ------------------------------------------
-# Expose Port
-# ------------------------------------------
-EXPOSE 8000
+# -----------------------------
+# Create necessary directories
+# -----------------------------
+RUN mkdir -p /app/logs /app/tmp
 
-# ------------------------------------------
-# Start Gunicorn
-# ------------------------------------------
-CMD ["gunicorn", "main:create_app()", "--bind", "0.0.0.0:8000", "--workers", "2"]
+# -----------------------------
+# Remove build tools to reduce image size
+# -----------------------------
+RUN apt-get purge -y git build-essential cmake && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /root/.cache
+
+# -----------------------------
+# Create non-root user for security
+# -----------------------------
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
+
+USER appuser
+
+# -----------------------------
+# Expose Port
+# -----------------------------
+EXPOSE ${PORT}
+
+# -----------------------------
+# Health Check
+# -----------------------------
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/health || exit 1
+
+# -----------------------------
+# Start Application with Gunicorn (Production)
+# -----------------------------
+CMD gunicorn --worker-class sync \
+    --workers 4 \
+    --threads 2 \
+    --timeout 120 \
+    --bind 0.0.0.0:${PORT} \
+    --access-logfile - \
+    --error-logfile - \
+    --log-level info \
+    'main:create_app()'
