@@ -1,7 +1,5 @@
 # ============================================
-# KEYORBIT KMS - PRODUCTION DOCKERFILE
-# Post-Quantum Cryptography Key Management System
-# ML-KEM-768 (Kyber768) & ML-DSA-65 (Dilithium3)
+# KEYORBIT KMS - PRODUCTION DOCKERFILE (make version)
 # ============================================
 
 FROM python:3.11-slim
@@ -31,8 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------
-# Build liboqs (Open Quantum Safe)
-# Enables ML-KEM, ML-DSA and other PQC algorithms
+# Build liboqs (Open Quantum Safe) with make
 # -----------------------------
 WORKDIR /tmp
 
