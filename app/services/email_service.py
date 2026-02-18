@@ -22,7 +22,7 @@ class EmailService:
                     border: 1px solid rgba(255, 255, 255, 0.2);
                     box-shadow: 0 8px 32px rgba(13, 13, 89, 0.3);
                 ">
-                    <img src="https://i.ibb.co/vCWbbHFh/keyorbit-logo.png" 
+                    <img src="https://i.ibb.co/6RcvQF4t/keyorbit-logo.png" 
                          alt="KeyOrbit Logo" 
                          style="max-width: 180px; height: auto; filter: brightness(1.2);">
                 </div>

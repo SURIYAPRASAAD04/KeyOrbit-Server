@@ -48,6 +48,7 @@ def create_app():
         "http://localhost:3000",
         "http://localhost:4028",
         "http://127.0.0.1:8000",
+        "https://keyorbit-kms.netlify.app",
     ]
     
     # In production, only allow specific origins

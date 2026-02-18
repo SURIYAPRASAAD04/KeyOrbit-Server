@@ -15,7 +15,7 @@ class Config:
     # Google OAuth Configuration
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
     GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
-    GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/auth/google/callback")
+    GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "https://keyorbit.onrender.com/auth/google/callback")
     
     # Email Configuration - SendGrid (WORKS ON RENDER FREE TIER!)
     SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")  # Add this line!
@@ -29,7 +29,7 @@ class Config:
     ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "noreply.keyorbit@gmail.com")
     
     # App Configuration
-    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "https://keyorbit-kms.netlify.app/")
     VERIFICATION_CODE_EXPIRE_MINUTES = int(os.getenv("VERIFICATION_CODE_EXPIRE_MINUTES", 30))
 
     COMPANY_NAME = os.getenv("COMPANY_NAME", "KeyOrbit KMS")
