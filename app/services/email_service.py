@@ -1,4 +1,8 @@
-import resend
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.image import MIMEImage
+import os
 from app.config import Config
 import logging
 
@@ -7,7 +11,7 @@ logger = logging.getLogger(__name__)
 class EmailService:
     @staticmethod
     def _create_email_template(title, content, include_logo=True):
-        """Create a glassmorphic email template with modern design"""
+        # Your existing template code - keep it exactly as is
         logo_html = ""
         if include_logo:
             logo_html = """
@@ -59,152 +63,9 @@ class EmailService:
         return html
 
     @staticmethod
-    def send_verification_email(email, code, name):
-        """Send email verification code"""
-        try:
-            # Initialize Resend with API key
-            resend.api_key = Config.RESEND_API_KEY
-            
-            subject = "Verify Your KeyOrbit Account"
-            content = f"""
-            <h2 style="margin-top: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Hello {name},</h2>
-            <p style="color: rgba(255, 255, 255, 0.9); font-size: 16px; line-height: 1.6; margin: 15px 0;">Thank you for registering with KeyOrbit. Please use the verification code below to complete your registration:</p>
-            
-            <div style="background: rgba(13, 13, 89, 0.3); border-radius: 20px; padding: 30px; margin: 35px 0; border: 1px solid rgba(242, 140, 0, 0.3); text-align: center;">
-                <div style="font-size: 36px; font-weight: 800; letter-spacing: 12px; color: #ffffff; font-family: monospace;">{code}</div>
-            </div>
-            
-            <p style="color: rgba(255, 255, 255, 0.8); font-size: 14px; text-align: center; margin: 15px 0;">
-                This code will expire in 30 minutes. If you didn't request this, please ignore this email.
-            </p>
-            
-            <div style="background: rgba(16, 185, 129, 0.15); border-radius: 16px; padding: 25px; margin: 20px 0; border-left: 4px solid #10B981;">
-                <p style="margin: 0; color: rgba(255, 255, 255, 0.9); font-size: 14px;">
-                    <strong>Security Tip:</strong> Never share your verification code with anyone. 
-                    KeyOrbit staff will never ask for your verification code.
-                </p>
-            </div>
-            """
-            
-            html = EmailService._create_email_template(subject, content)
-            
-            params = {
-                "from": "KeyOrbit <onboarding@resend.dev>",
-                "to": [email],
-                "subject": subject,
-                "html": html,
-            }
-            
-            response = resend.Emails.send(params)
-            logger.info(f"Verification email sent to {email}: {response}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Verification email failed to {email}: {str(e)}")
-            # Fallback to SMTP if needed (optional)
-            return False
-
-    @staticmethod
-    def send_welcome_email(email, name):
-        """Send welcome email to new users"""
-        try:
-            resend.api_key = Config.RESEND_API_KEY
-            
-            subject = "Welcome to KeyOrbit - Your Enterprise Security Journey Begins"
-            content = f"""
-            <h2 style="margin-top: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Welcome to KeyOrbit, {name}!</h2>
-            
-            <p style="color: rgba(255, 255, 255, 0.9); font-size: 16px; line-height: 1.6; margin: 15px 0;">We're thrilled to have you join our community. Your account has been successfully created and is ready to use.</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-                <a href="{Config.FRONTEND_URL}/dashboard" style="display: inline-block; padding: 16px 32px; background: #F28C00; color: white; text-decoration: none; border-radius: 16px; font-weight: 600; font-size: 16px;">Launch Your Dashboard</a>
-            </div>
-            
-            <div style="margin: 30px 0;">
-                <h3 style="color: #ffffff; font-size: 22px; font-weight: 600; margin: 25px 0 15px 0;">Get Started with KeyOrbit</h3>
-                
-                <div style="background: rgba(255, 255, 255, 0.06); padding: 24px; border-radius: 16px; margin: 16px 0;">
-                    <div style="font-weight: 600; font-size: 18px; color: #ffffff;">Secure Your Keys</div>
-                    <p style="margin: 0; color: rgba(255, 255, 255, 0.8);">Generate and manage cryptographic keys with enterprise-grade security</p>
-                </div>
-                
-                <div style="background: rgba(255, 255, 255, 0.06); padding: 24px; border-radius: 16px; margin: 16px 0;">
-                    <div style="font-weight: 600; font-size: 18px; color: #ffffff;">Team Collaboration</div>
-                    <p style="margin: 0; color: rgba(255, 255, 255, 0.8);">Invite team members and set up role-based access control</p>
-                </div>
-            </div>
-            """
-            
-            html = EmailService._create_email_template(subject, content)
-            
-            params = {
-                "from": "KeyOrbit <onboarding@resend.dev>",
-                "to": [email],
-                "subject": subject,
-                "html": html,
-            }
-            
-            response = resend.Emails.send(params)
-            logger.info(f"Welcome email sent to {email}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Welcome email failed to {email}: {str(e)}")
-            return False
-
-    @staticmethod
-    def send_password_reset_email(email, reset_token, name):
-        """Send password reset email"""
-        try:
-            resend.api_key = Config.RESEND_API_KEY
-            
-            subject = "Reset Your KeyOrbit Password"
-            reset_url = f"{Config.FRONTEND_URL}/reset-password?token={reset_token}"
-            
-            content = f"""
-            <h2 style="margin-top: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Hello {name},</h2>
-            
-            <p style="color: rgba(255, 255, 255, 0.9); font-size: 16px; line-height: 1.6; margin: 15px 0;">We received a request to reset your KeyOrbit account password. Click the button below to create a new password:</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-                <a href="{reset_url}" style="display: inline-block; padding: 16px 32px; background: #ef4444; color: white; text-decoration: none; border-radius: 16px; font-weight: 600; font-size: 16px;">Reset Password</a>
-            </div>
-            
-            <p style="color: rgba(255, 255, 255, 0.8); font-size: 14px; text-align: center; margin: 15px 0;">
-                This link will expire in 1 hour. If you didn't request this, please ignore this email.
-            </p>
-            
-            <div style="background: rgba(239, 68, 68, 0.15); border-radius: 16px; padding: 25px; margin: 20px 0;">
-                <p style="margin: 0; color: rgba(255, 255, 255, 0.9); font-size: 14px;">
-                    <strong>Security Alert:</strong> If you didn't request this password reset, 
-                    please review your account security immediately.
-                </p>
-            </div>
-            """
-            
-            html = EmailService._create_email_template(subject, content)
-            
-            params = {
-                "from": "KeyOrbit <onboarding@resend.dev>",
-                "to": [email],
-                "subject": subject,
-                "html": html,
-            }
-            
-            response = resend.Emails.send(params)
-            logger.info(f"Password reset email sent to {email}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Password reset email failed to {email}: {str(e)}")
-            return False
-
-    @staticmethod
     def send_user_invitation_email(email, invitation_token, organization_name, inviter_name, role, message="", is_resend=False):
-        """Send user invitation email"""
+        """Send user invitation email via SMTP2GO"""
         try:
-            resend.api_key = Config.RESEND_API_KEY
-            
             subject = f"Join {organization_name} on KeyOrbit" if not is_resend else f"Reminder: Join {organization_name} on KeyOrbit"
             accept_url = f"{Config.FRONTEND_URL}/accept-invitation?token={invitation_token}"
             
@@ -237,90 +98,146 @@ class EmailService:
             <p style="color: rgba(255, 255, 255, 0.8); font-size: 14px; text-align: center; margin: 15px 0;">
                 This invitation will expire in 7 days. If you didn't expect this invitation, please ignore this email.
             </p>
-            
-            <div style="background: rgba(59, 130, 246, 0.15); border-radius: 16px; padding: 25px; margin: 20px 0;">
-                <h4 style="margin: 0 0 15px 0; color: #ffffff; font-size: 18px; font-weight: 600;">About Your Role: {role_display}</h4>
-                <p style="margin: 0; color: rgba(255, 255, 255, 0.9);">
-                    {EmailService._get_role_permissions_description(role)}
-                </p>
-            </div>
-            
-            <div style="background: rgba(16, 185, 129, 0.15); border-radius: 16px; padding: 25px; margin: 20px 0; border-left: 4px solid #10B981;">
-                <h4 style="margin: 0 0 15px 0; color: #ffffff; font-size: 18px; font-weight: 600;">What is KeyOrbit?</h4>
-                <p style="margin: 0; color: rgba(255, 255, 255, 0.9);">
-                    KeyOrbit is an enterprise key management system that helps organizations securely manage 
-                    cryptographic keys, secrets, and certificates.
-                </p>
-            </div>
             """
             
             html = EmailService._create_email_template(subject, content)
             
-            params = {
-                "from": "KeyOrbit <onboarding@resend.dev>",
-                "to": [email],
-                "subject": subject,
-                "html": html,
-            }
+            # Use SMTP2GO to send
+            msg = MIMEMultipart()
+            msg['From'] = Config.FROM_EMAIL
+            msg['To'] = email
+            msg['Subject'] = subject
+            msg.attach(MIMEText(html, 'html'))
             
-            response = resend.Emails.send(params)
-            logger.info(f"Invitation email sent to {email}")
+            # Connect to SMTP2GO on port 2525
+            server = smtplib.SMTP(Config.SMTP_SERVER, Config.SMTP_PORT, timeout=30)
+            server.starttls()
+            server.login(Config.SMTP_USERNAME, Config.SMTP_PASSWORD)
+            server.send_message(msg)
+            server.quit()
+            
+            logger.info(f"Invitation email sent successfully to {email} via SMTP2GO")
             return True
             
         except Exception as e:
-            logger.error(f"Invitation email failed to {email}: {str(e)}")
+            logger.error(f"Email sending failed to {email}: {str(e)}")
             return False
 
     @staticmethod
-    def send_admin_notification_email(admin_email, user_email, user_name):
-        """Send notification to admin about new user registration"""
+    def send_verification_email(email, code, name):
+        """Send email verification code"""
         try:
-            resend.api_key = Config.RESEND_API_KEY
-            
-            subject = "New User Registration - KeyOrbit"
+            subject = "Verify Your KeyOrbit Account"
             
             content = f"""
-            <h2 style="margin-top: 0; color: #ffffff; font-size: 28px; font-weight: 600;">New User Registration</h2>
+            <h2 style="margin-top: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Hello {name},</h2>
+            <p style="color: rgba(255, 255, 255, 0.9); font-size: 16px; line-height: 1.6; margin: 15px 0;">Thank you for registering with KeyOrbit. Please use the verification code below to complete your registration:</p>
             
-            <p style="color: rgba(255, 255, 255, 0.9); font-size: 16px; line-height: 1.6; margin: 15px 0;">A new user has registered on your KeyOrbit instance:</p>
-            
-            <div style="background: rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 25px; margin: 20px 0;">
-                <p style="margin: 0; color: white;"><strong>Name:</strong> {user_name}</p>
-                <p style="margin: 10px 0 0 0; color: white;"><strong>Email:</strong> {user_email}</p>
+            <div style="background: rgba(13, 13, 89, 0.3); border-radius: 20px; padding: 30px; margin: 35px 0; border: 1px solid rgba(242, 140, 0, 0.3); text-align: center;">
+                <div style="font-size: 36px; font-weight: 800; letter-spacing: 12px; color: #ffffff; font-family: monospace;">{code}</div>
             </div>
             
+            <p style="color: rgba(255, 255, 255, 0.8); font-size: 14px; text-align: center; margin: 15px 0;">
+                This code will expire in 30 minutes. If you didn't request this, please ignore this email.
+            </p>
+            """
+            
+            html = EmailService._create_email_template(subject, content)
+            
+            msg = MIMEMultipart()
+            msg['From'] = Config.FROM_EMAIL
+            msg['To'] = email
+            msg['Subject'] = subject
+            msg.attach(MIMEText(html, 'html'))
+            
+            server = smtplib.SMTP(Config.SMTP_SERVER, Config.SMTP_PORT, timeout=30)
+            server.starttls()
+            server.login(Config.SMTP_USERNAME, Config.SMTP_PASSWORD)
+            server.send_message(msg)
+            server.quit()
+            
+            logger.info(f"Verification email sent to {email}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Verification email failed to {email}: {str(e)}")
+            return False
+
+    @staticmethod
+    def send_welcome_email(email, name):
+        """Send welcome email to new users"""
+        try:
+            subject = "Welcome to KeyOrbit - Your Enterprise Security Journey Begins"
+            
+            content = f"""
+            <h2 style="margin-top: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Welcome to KeyOrbit, {name}!</h2>
+            
+            <p style="color: rgba(255, 255, 255, 0.9); font-size: 16px; line-height: 1.6; margin: 15px 0;">We're thrilled to have you join our community. Your account has been successfully created and is ready to use.</p>
+            
             <div style="text-align: center; margin: 30px 0;">
-                <a href="{Config.FRONTEND_URL}/admin/users" style="display: inline-block; padding: 16px 32px; background: #F28C00; color: white; text-decoration: none; border-radius: 16px; font-weight: 600;">View User Management</a>
+                <a href="{Config.FRONTEND_URL}/dashboard" style="display: inline-block; padding: 16px 32px; background: #F28C00; color: white; text-decoration: none; border-radius: 16px; font-weight: 600; font-size: 16px;">Launch Your Dashboard</a>
             </div>
             """
             
             html = EmailService._create_email_template(subject, content)
             
-            params = {
-                "from": "KeyOrbit <onboarding@resend.dev>",
-                "to": [admin_email],
-                "subject": subject,
-                "html": html,
-            }
+            msg = MIMEMultipart()
+            msg['From'] = Config.FROM_EMAIL
+            msg['To'] = email
+            msg['Subject'] = subject
+            msg.attach(MIMEText(html, 'html'))
             
-            response = resend.Emails.send(params)
-            logger.info(f"Admin notification sent to {admin_email}")
+            server = smtplib.SMTP(Config.SMTP_SERVER, Config.SMTP_PORT, timeout=30)
+            server.starttls()
+            server.login(Config.SMTP_USERNAME, Config.SMTP_PASSWORD)
+            server.send_message(msg)
+            server.quit()
+            
+            logger.info(f"Welcome email sent to {email}")
             return True
             
         except Exception as e:
-            logger.error(f"Admin notification failed: {str(e)}")
+            logger.error(f"Welcome email failed to {email}: {str(e)}")
             return False
 
     @staticmethod
-    def _get_role_permissions_description(role):
-        """Get description of permissions for a role"""
-        permissions_map = {
-            'admin': '• Full system administration<br>• Manage all keys and secrets<br>• Manage users and permissions<br>• Access all audit logs<br>• Configure system settings',
-            'administrator': '• Full system administration<br>• Manage all keys and secrets<br>• Manage users and permissions<br>• Access all audit logs<br>• Configure system settings',
-            'manager': '• Manage team members<br>• Create and manage keys<br>• View audit logs<br>• Configure team settings',
-            'developer': '• Create and manage keys<br>• Encrypt/decrypt data<br>• View own activity logs',
-            'auditor': '• View all audit logs<br>• Generate compliance reports<br>• Monitor system activity',
-            'viewer': '• View keys and data (read-only)<br>• View basic reports',
-            'user': '• Basic key operations<br>• View own resources'
-        }
-        return permissions_map.get(role, 'Basic access permissions')
+    def send_password_reset_email(email, reset_token, name):
+        """Send password reset email"""
+        try:
+            subject = "Reset Your KeyOrbit Password"
+            reset_url = f"{Config.FRONTEND_URL}/reset-password?token={reset_token}"
+            
+            content = f"""
+            <h2 style="margin-top: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Hello {name},</h2>
+            
+            <p style="color: rgba(255, 255, 255, 0.9); font-size: 16px; line-height: 1.6; margin: 15px 0;">We received a request to reset your KeyOrbit account password. Click the button below to create a new password:</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{reset_url}" style="display: inline-block; padding: 16px 32px; background: #ef4444; color: white; text-decoration: none; border-radius: 16px; font-weight: 600; font-size: 16px;">Reset Password</a>
+            </div>
+            
+            <p style="color: rgba(255, 255, 255, 0.8); font-size: 14px; text-align: center; margin: 15px 0;">
+                This link will expire in 1 hour. If you didn't request this, please ignore this email.
+            </p>
+            """
+            
+            html = EmailService._create_email_template(subject, content)
+            
+            msg = MIMEMultipart()
+            msg['From'] = Config.FROM_EMAIL
+            msg['To'] = email
+            msg['Subject'] = subject
+            msg.attach(MIMEText(html, 'html'))
+            
+            server = smtplib.SMTP(Config.SMTP_SERVER, Config.SMTP_PORT, timeout=30)
+            server.starttls()
+            server.login(Config.SMTP_USERNAME, Config.SMTP_PASSWORD)
+            server.send_message(msg)
+            server.quit()
+            
+            logger.info(f"Password reset email sent to {email}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Password reset email failed to {email}: {str(e)}")
+            return False
