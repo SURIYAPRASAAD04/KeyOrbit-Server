@@ -49,6 +49,10 @@ tzdata==2023.3
 email-validator==2.0.0
 phonenumbers==8.13.0
 
+# Email
+sendgrid==6.10.0
+python-http-client==3.3.7
+
 # --- Monitoring & Logging ---
 structlog==24.1.0
 python-json-logger==2.0.7
@@ -69,3 +73,4 @@ pyotp==2.9.0
 # --- Redis (optional - for rate limiting) ---
 redis==5.0.1
 flask-limiter==3.5.0
+
