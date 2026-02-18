@@ -1,5 +1,7 @@
 # ============================================
-# KEYORBIT KMS - PRODUCTION DOCKERFILE (make version)
+# KEYORBIT KMS - PRODUCTION DOCKERFILE
+# Post-Quantum Cryptography Key Management System
+# ML-KEM-768 (Kyber768) & ML-DSA-65 (Dilithium3)
 # ============================================
 
 FROM python:3.11-slim
@@ -29,7 +31,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------
-# Build liboqs (Open Quantum Safe) with make
+# Build liboqs (Open Quantum Safe)
+# Enables ML-KEM, ML-DSA only (minimal build)
 # -----------------------------
 WORKDIR /tmp
 
@@ -54,8 +57,12 @@ RUN git clone --depth 1 https://github.com/open-quantum-safe/liboqs.git && \
         .. && \
     make -j$(nproc) && \
     make install && \
-    ldconfig && \
-    cd /tmp && rm -rf liboqs
+    ldconfig
+
+# -----------------------------
+# Clean up build artifacts
+# -----------------------------
+RUN cd /tmp && rm -rf liboqs
 
 # -----------------------------
 # Setup Application Directory
@@ -68,7 +75,7 @@ WORKDIR /app
 COPY requirements.txt .
 
 # -----------------------------
-# Install Python Dependencies
+# Install Python Dependencies (in one layer to reduce size)
 # -----------------------------
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r requirements.txt && \
