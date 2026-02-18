@@ -102,6 +102,13 @@ class EmailService:
         <p style="color: rgba(255, 255, 255, 0.8); font-size: 14px; text-align: center; margin: 15px 0;">
             This code will expire in 30 minutes. If you didn't request this, please ignore this email.
         </p>
+        
+        <div style="background: rgba(16, 185, 129, 0.15); border-radius: 16px; padding: 25px; margin: 20px 0; border-left: 4px solid #10B981;">
+            <p style="margin: 0; color: rgba(255, 255, 255, 0.9); font-size: 14px;">
+                <strong>Security Tip:</strong> Never share your verification code with anyone. 
+                KeyOrbit staff will never ask for your verification code.
+            </p>
+        </div>
         """
         
         html = EmailService._create_email_template(subject, content)
@@ -119,6 +126,25 @@ class EmailService:
         
         <div style="text-align: center; margin: 30px 0;">
             <a href="{Config.FRONTEND_URL}/dashboard" style="display: inline-block; padding: 16px 32px; background: #F28C00; color: white; text-decoration: none; border-radius: 16px; font-weight: 600; font-size: 16px;">Launch Your Dashboard</a>
+        </div>
+        
+        <div style="margin: 30px 0;">
+            <h3 style="color: #ffffff; font-size: 22px; font-weight: 600; margin: 25px 0 15px 0;">Get Started with KeyOrbit</h3>
+            
+            <div style="background: rgba(255, 255, 255, 0.06); padding: 24px; border-radius: 16px; margin: 16px 0;">
+                <div style="font-weight: 600; font-size: 18px; color: #ffffff;">Secure Your Keys</div>
+                <p style="margin: 0; color: rgba(255, 255, 255, 0.8);">Generate and manage cryptographic keys with enterprise-grade security</p>
+            </div>
+            
+            <div style="background: rgba(255, 255, 255, 0.06); padding: 24px; border-radius: 16px; margin: 16px 0;">
+                <div style="font-weight: 600; font-size: 18px; color: #ffffff;">Team Collaboration</div>
+                <p style="margin: 0; color: rgba(255, 255, 255, 0.8);">Invite team members and set up role-based access control</p>
+            </div>
+            
+            <div style="background: rgba(255, 255, 255, 0.06); padding: 24px; border-radius: 16px; margin: 16px 0;">
+                <div style="font-weight: 600; font-size: 18px; color: #ffffff;">Monitor Activity</div>
+                <p style="margin: 0; color: rgba(255, 255, 255, 0.8);">Track all cryptographic operations with comprehensive audit logs</p>
+            </div>
         </div>
         """
         
@@ -143,6 +169,13 @@ class EmailService:
         <p style="color: rgba(255, 255, 255, 0.8); font-size: 14px; text-align: center; margin: 15px 0;">
             This link will expire in 1 hour. If you didn't request this, please ignore this email.
         </p>
+        
+        <div style="background: rgba(239, 68, 68, 0.15); border-radius: 16px; padding: 25px; margin: 20px 0;">
+            <p style="margin: 0; color: rgba(255, 255, 255, 0.9); font-size: 14px;">
+                <strong>Security Alert:</strong> If you didn't request this password reset, 
+                please review your account security immediately.
+            </p>
+        </div>
         """
         
         html = EmailService._create_email_template(subject, content)
@@ -183,6 +216,26 @@ class EmailService:
         <p style="color: rgba(255, 255, 255, 0.8); font-size: 14px; text-align: center; margin: 15px 0;">
             This invitation will expire in 7 days. If you didn't expect this invitation, please ignore this email.
         </p>
+        
+        <div style="background: rgba(59, 130, 246, 0.15); border-radius: 16px; padding: 25px; margin: 20px 0;">
+            <h4 style="margin: 0 0 15px 0; color: #ffffff; font-size: 18px; font-weight: 600;">About Your Role: {role_display}</h4>
+            <p style="margin: 0; color: rgba(255, 255, 255, 0.9);">
+                {role_display} role includes the following permissions:<br>
+                • Full system administration<br>
+                • Manage all keys and secrets<br>
+                • Manage users and permissions<br>
+                • Access all audit logs<br>
+                • Configure system settings
+            </p>
+        </div>
+        
+        <div style="background: rgba(16, 185, 129, 0.15); border-radius: 16px; padding: 25px; margin: 20px 0; border-left: 4px solid #10B981;">
+            <h4 style="margin: 0 0 15px 0; color: #ffffff; font-size: 18px; font-weight: 600;">What is KeyOrbit?</h4>
+            <p style="margin: 0; color: rgba(255, 255, 255, 0.9);">
+                KeyOrbit is an enterprise key management system that helps organizations securely manage 
+                cryptographic keys, secrets, and certificates.
+            </p>
+        </div>
         """
         
         html = EmailService._create_email_template(subject, content)
@@ -201,10 +254,11 @@ class EmailService:
         <div style="background: rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 25px; margin: 20px 0;">
             <p style="margin: 0;"><strong>Name:</strong> {user_name}</p>
             <p style="margin: 10px 0 0 0;"><strong>Email:</strong> {user_email}</p>
+            <p style="margin: 10px 0 0 0;"><strong>Registration Date:</strong> Just now</p>
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="{Config.FRONTEND_URL}/admin/users" style="display: inline-block; padding: 16px 32px; background: #F28C00; color: white; text-decoration: none; border-radius: 16px; font-weight: 600;">View User Management</a>
+            <a href="{Config.FRONTEND_URL}/admin/users" style="display: inline-block; padding: 16px 32px; background: #F28C00; color: white; text-decoration: none; border-radius: 16px; font-weight: 600; font-size: 16px;">View User Management</a>
         </div>
         """
         

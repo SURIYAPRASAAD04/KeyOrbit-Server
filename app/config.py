@@ -10,20 +10,23 @@ class Config:
     # JWT Configuration
     JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key-change-in-production")
     JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-    JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", 1440))
+    JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", 1440))  # 24 hours
     
     # Google OAuth Configuration
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
     GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
     GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/auth/google/callback")
     
-    # Email Configuration - SMTP2GO (Works on Render free tier!)
-    SMTP_SERVER = os.getenv("SMTP_SERVER", "mail.smtp2go.com")
-    SMTP_PORT = int(os.getenv("SMTP_PORT", 2525))  # Port 2525 is key!
+    # Email Configuration - SendGrid (WORKS ON RENDER FREE TIER!)
+    SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")  # Add this line!
+    
+    # SMTP Configuration (Backup - keep for compatibility)
+    SMTP_SERVER = os.getenv("SMTP_SERVER")
+    SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
     SMTP_USERNAME = os.getenv("SMTP_USERNAME")
     SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-    FROM_EMAIL = os.getenv("FROM_EMAIL", "noreply@test.smtp2go.com")
-    ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@keyorbit.com")
+    FROM_EMAIL = os.getenv("FROM_EMAIL", "noreply.keyorbit@gmail.com")
+    ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "noreply.keyorbit@gmail.com")
     
     # App Configuration
     FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
@@ -31,7 +34,7 @@ class Config:
 
     COMPANY_NAME = os.getenv("COMPANY_NAME", "KeyOrbit KMS")
     COMPANY_WEBSITE = os.getenv("COMPANY_WEBSITE", "https://keyorbit.com")
-    SUPPORT_EMAIL = os.getenv("SUPPORT_EMAIL", "support@keyorbit.com")
+    SUPPORT_EMAIL = os.getenv("SUPPORT_EMAIL", "noreply.keyorbit@gmail.com")
     
     # Timezone Configuration
-    DEFAULT_TIMEZONE = os.getenv("DEFAULT_TIMEZONE", "Asia/Kolkata")
+    DEFAULT_TIMEZONE = os.getenv("DEFAULT_TIMEZONE", "Asia/Kolkata")  # IST
