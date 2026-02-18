@@ -17,7 +17,10 @@ class Config:
     GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
     GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/auth/google/callback")
     
-    # Email Configuration
+    # Email Configuration - Resend (Primary)
+    RESEND_API_KEY = os.getenv("RESEND_API_KEY")  # Add this line!
+    
+    # SMTP Configuration (Backup - keep for compatibility)
     SMTP_SERVER = os.getenv("SMTP_SERVER")
     SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
     SMTP_USERNAME = os.getenv("SMTP_USERNAME")
